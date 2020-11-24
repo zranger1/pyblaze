@@ -26,13 +26,10 @@
  Version  Date         Author Comment
  v0.0.1   11/23/2020   JEM(ZRanger1)    Created
 """
-
 from pyblaze import *
 import time
+import sys
 
-"""
-
-"""
 
 if __name__ == "__main__":
     
@@ -51,7 +48,7 @@ if __name__ == "__main__":
     # run through various calls to make sure we have
     # basic functionality  
     pb.stopSequencer()
-    
+       
     print("Testing: getPatternList")
     result = pb.getPatternList()
     for key, value in result.items():
@@ -60,7 +57,8 @@ if __name__ == "__main__":
     
     print("Testing: setActivePattern")
     pb.setActivePattern("OBVIOUSLY BOGUS PATTERN")  # just to make sure nothing bad happens
-    pb.setActivePattern(basicPatternName)          
+    pb.setActivePattern(basicPatternName)
+    pb.waitForEmptyQueue(1000)
     time.sleep(1)
     
     print("Testing: getVars")
@@ -70,6 +68,7 @@ if __name__ == "__main__":
            
     print("Testing: setBrightness")
     pb.setActivePattern(basicPatternName)
+    pb.waitForEmptyQueue(1000)    
     time.sleep(0.2)
     for i in range(4):
         print('.', end='')
@@ -112,7 +111,7 @@ if __name__ == "__main__":
     pb.setControl(testControlName,val,False); # restore previous setting
     time.sleep(2)
     
-    pb.setActivePattern("KITT") # Set pattern back to something reasonable      
+    pb.setActivePattern(basicPatternName) # Set pattern back to something reasonable      
 
     pb.close()
     print("Testing: Complete!")

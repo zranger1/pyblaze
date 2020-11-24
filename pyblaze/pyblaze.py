@@ -34,6 +34,7 @@ class Pixelblaze:
     ws = None
     connected = False
     flash_save_enabled = False
+    default_recv_timeout = 1
     ipAddr = None
     
     def __init__(self, addr):
@@ -52,8 +53,9 @@ class Pixelblaze:
         """
         if (self.connected is False):
             uri = "ws://"+addr+":81"
-            self.ws = websocket.create_connection(uri,sockopt=((socket.SOL_SOCKET, socket.SO_REUSEADDR,1),))
-            self.ws.settimeout(1)
+            self.ws = websocket.create_connection(uri,sockopt=((socket.SOL_SOCKET, socket.SO_REUSEADDR,1),
+                                                               (socket.IPPROTO_TCP, socket.TCP_NODELAY,1),))
+            self.ws.settimeout(self.default_recv_timeout)
             self.ipAddr = addr
             self.connected = True
 
@@ -106,7 +108,7 @@ class Pixelblaze:
             while (True):
                 self.ws.recv()
         except websocket._exceptions.WebSocketTimeoutException:
-            self.ws.settimeout(1)  # restore normal timeout
+            self.ws.settimeout(self.default_recv_timeout)  # restore normal timeout
             return   # if we get a timeout, there are no more pending packets
 
     def ws_recv(self, wantBinary = False):
@@ -137,6 +139,20 @@ class Pixelblaze:
     def send_string(self, cmd):
         """Utility method: Send string-ized JSON to the pixelblaze"""    
         self.ws.send(cmd.encode("utf-8"))
+        
+    def waitForEmptyQueue(self,timeout_ms=1000):
+        """
+        Wait until the Pixelblaze's websocket message queue is empty, or until
+        timeout_ms milliseconds have elapsed.  Returns True if an empty queue
+        acknowldgement was received, False if timeout or error occurs.
+        """
+        self.ws_flush()
+        self.ws.settimeout(timeout_ms / 1000)
+        self.send_string('{"ping": true}')
+        result = self.ws.recv()        
+        self.ws.settimeout(self.default_recv_timeout)
+        
+        return True if ((result is not None) and (result.startswith('{"ack"'))) else False                
         
     def getVars(self):
         """Returns JSON object containing all vars exported from the active pattern"""
@@ -176,14 +192,27 @@ class Pixelblaze:
         if (patterns.get(pid) is None):
             pid = self._id_from_name(patterns, pid)
         
-        return pid       
+        return pid
+    
+    def setActivePatternId(self,pid):
+        """
+        Sets the active pattern by pattern ID, without the name lookup option
+        supported by setActivePattern().  This method is faster and more
+        network efficient than SetActivePattern() if you already know a
+        pattern's ID.
+        
+        It does not validate the input id, or determine if the pattern is
+        available on the Pixelblaze.
+        """
+        self.send_string('{"activeProgramId" : "%s"}'%pid)
+        
         
     def setActivePattern(self, pid):
         """Sets the currently running pattern, using either an ID or a text name"""
         p = self._get_pattern_id(pid)
             
         if (p is not None):
-            self.send_string('{"activeProgramId" : "%s"}'%p)
+            self.setActivePatternId(p)
             
     def getActivePattern(self):
         """

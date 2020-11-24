@@ -68,13 +68,18 @@ user or by the Pixelblaze.
 #### setActivePattern(pid)
 Sets the currently running pattern, using either an ID or a text name
 
+#### setActivePatternId(pid):
+Sets the active pattern by pattern ID, without the name lookup option
+supported by setActivePattern(). This method is faster and more network efficient than SetActivePattern()
+if you already know a pattern's ID. It does not validate the input id, or determine if the pattern is
+ available on the Pixelblaze.
+
 #### setBrightness(n)
 Set the Pixelblaze's global brightness.  Valid range is 0-1
 
 #### setControl(ctl_name, value, saveFlash = False)
 Sets the value of a single UI controls in the active pattern.
-to values contained inct in argument json_ctl. To reduce wear on
-Pixelblaze's flash memory, the saveFlash parameter is ignored
+to values contained inct in argument json_ctl. To reduce wear on Pixelblaze's flash memory, the saveFlash parameter is ignored
 by default.  See documentation for _enable_flash_save() for
 more information.
 
@@ -113,6 +118,11 @@ variable is actually exported by the current active pattern.
 #### setVars(json_vars)
 Sets pattern variables contained in the json_vars (JSON object) argument.
 Does not check to see if the variables are exported by the current active pattern.
+
+#### waitForEmptyQueue(timeout_ms=1000):
+Wait until the Pixelblaze's websocket message queue is empty, or until
+timeout_ms milliseconds have elapsed.  Returns True if an empty queue
+acknowldgement was received, False if timeout or error occurs.
 
 ## Utility methods
 #### _enable_flash_save()
