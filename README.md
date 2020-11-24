@@ -1,13 +1,13 @@
 # pyblaze
 A Python library that presents a simple, synchronous interface for communicating with and
-controlling a Pixelblaze LED controller.  Requires Python 3 and the websocket-client
+controlling one or more Pixelblaze LED controllers. Requires Python 3 and the websocket-client
 module.
 
 ## Version 0.0.1
 Initial release - here be dragons (hopefully not, but bugs are within the realm of possibility)
 
 ## Requirements
-Python 3.4-3.7
+Python 3.4-3.7 (written and tested on 3.7.7)
 
 websocket-client (installable via pip, or from https://github.com/websocket-client/websocket-client
 (Python 3.8 and above are not yet supported by websocket-client module)
@@ -19,12 +19,14 @@ does not want to share the socket, and strange things might happen even if it di
 
 I've gone to a some length to put an easy-to-program synchronous interface over what is essentially an
 asynchronous communication system. At this point, it's good, but not perfect. It may behave oddly if you are 
-controlling the same Pixelblaze from multiple computers or multiple programs.  Report this sort of thing if
-you see it -- it may not be fixable, but at least I can take a look.
+controlling the same Pixelblaze from multiple computers or multiple programs.  Report bugs of this sort if
+you see them -- it may not be fixable, but at least I can take a look.
+
+Detection and Firestorm-style time synchronization are not yet implemented, but are coming soon.
 
 ## Installation
-Pyblaze consists of a single file -- pyblaze.py from this repository.  Drop it into your project
-directory and import it into your project.  That's all.  An example -- example.py -- of setup and
+Pyblaze consists of a single file -- [pyblaze.py](https://github.com/zranger1/pyblaze/blob/main/pyblaze/pyblaze.py) from this repository.  Drop it into your project
+directory and import it into your project.  That's all.  An example -- [example.py](https://github.com/zranger1/pyblaze/blob/main/pyblaze/example.py) -- of setup and
 API usage is also provided.
 
 ## API Documentation
@@ -33,7 +35,7 @@ API usage is also provided.
 #### PixelBlaze(addr)
 Create and open Pixelblaze object. Takes the Pixelblaze's IPv4 address in the
 usual 12 digit numeric form (for example, 192.168.1.xxx)  Returns a connected
-Pixelblaze object
+Pixelblaze object.  To control multiple Pixelblazes, create multiple objects.
 
 #### close()
 Close websocket connection on Pixelblaze object.  The connection can be 

@@ -52,8 +52,7 @@ class Pixelblaze:
         """
         if (self.connected is False):
             uri = "ws://"+addr+":81"
-            self.ws = websocket.create_connection(uri,sockopt=((socket.SOL_SOCKET, socket.SO_REUSEADDR,1),
-                                                               (socket.IPPROTO_TCP, socket.TCP_NODELAY,1),))
+            self.ws = websocket.create_connection(uri,sockopt=((socket.SOL_SOCKET, socket.SO_REUSEADDR,1),))
             self.ws.settimeout(1)
             self.ipAddr = addr
             self.connected = True
@@ -66,7 +65,7 @@ class Pixelblaze:
             
     def __boolean_to_json_string(self, val):
         """Utility method: Converts Python True/False to JSON true/false"""
-        return "true" if (val is True) else "false"
+        return ',"save":true' if (val is True) else ""
     
     def __get_save_string(self, val):
         """
@@ -75,7 +74,8 @@ class Pixelblaze:
         _enable_flash_save() has not been called on the Pixelblaze object. Otherwise
         returns a string reflecting the value of the boolean <val> argument.
         """
-        return self.__boolean_to_json_string(val) if (self.flash_save_enabled is True) else "false"        
+        val = val if (self.flash_save_enabled is True) else False
+        return self.__boolean_to_json_string(val)
             
     def _enable_flash_save(self):
         """
@@ -89,20 +89,25 @@ class Pixelblaze:
         self.flash_save_enabled = True
         
     def ws_flush(self):
-        """Utility method: drain websocket receive buffers"""
+        """
+        Utility method: drain websocket receive buffers. Called to clear out unexpected
+        packets before sending requests for data w/send_string(). We do not call it
+        before simply sending commands because it has a small performance cost.
+        
+        This is one of the treacherously "clever" things done to make pyblaze
+        work as a synchronous API when the Pixelblaze may be sending out unexpected
+        packets or talking to multiple devices.  We do some extra work to make sure
+        we're only receiving the packets we want.
+        """
         
         self.ws.settimeout(0.1)  # set very short timeout
         
         try:
             while (True):
-                result = self.ws.recv()
+                self.ws.recv()
         except websocket._exceptions.WebSocketTimeoutException:
             self.ws.settimeout(1)  # restore normal timeout
             return   # if we get a timeout, there are no more pending packets
-            
-        except websocket._exceptions.WebSocketConnectionClosedException:
-            raise    # disconnect
-            
 
     def ws_recv(self, wantBinary = False):
         """
@@ -130,12 +135,12 @@ class Pixelblaze:
         return result            
    
     def send_string(self, cmd):
-        """Utility method: Send string-ized JSON to the pixelblaze"""
-        self.ws_flush()  # make sure there are no pending packets        
+        """Utility method: Send string-ized JSON to the pixelblaze"""    
         self.ws.send(cmd.encode("utf-8"))
         
     def getVars(self):
         """Returns JSON object containing all vars exported from the active pattern"""
+        self.ws_flush()  # make sure there are no pending packets    
         self.send_string('{"getVars": true}')
         return json.loads(self.ws.recv())
     
@@ -147,7 +152,7 @@ class Pixelblaze:
         jstr = json.dumps(json_vars)
         self.send_string('{"setVars" : '+jstr+"}")
         
-    def setVariable(self,var_name,value):
+    def setVariable(self, var_name, value):
         """
         Sets a single variable to the specified value. Does not check to see if the
         variable is actually exported by the current active pattern.
@@ -214,6 +219,7 @@ class Pixelblaze:
         
     def getHardwareConfig(self):
         """Returns a JSON object containing all the available hardware configuration data"""
+        self.ws_flush()  # make sure there are no pending packets    
         self.send_string('{"getConfig": true}')
         hw = dict()
         
@@ -246,7 +252,7 @@ class Pixelblaze:
         """
         saveStr = self.__get_save_string(saveFlash)
         jstr = json.dumps(json_ctl)
-        self.send_string('{"setControls": %s,"save":%s}'%(jstr,saveStr))
+        self.send_string('{"setControls": %s %s}'%(jstr,saveStr))
         
     def setControl(self, ctl_name, value, saveFlash = False):
         """
@@ -272,7 +278,7 @@ class Pixelblaze:
         the saveFlash parameter to make your new timing (semi) permanent.
         """
         saveStr = self.__get_save_string(saveFlash)
-        self.send_string('{"dataSpeed" : %d,"save": %s}'%(speed,saveStr))       
+        self.send_string('{"dataSpeed" : %d %s}'%(speed,saveStr))       
     
     def getPatternList(self):
         """
@@ -280,6 +286,7 @@ class Pixelblaze:
         saved patterns on the Pixelblaze
         """
         patterns = dict()
+        self.ws_flush()  # make sure there are no pending packets    
         self.send_string("{ \"listPrograms\" : true }")
         
         frame = self.ws_recv(True)
