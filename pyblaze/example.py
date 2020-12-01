@@ -102,6 +102,7 @@ if __name__ == "__main__":
     print(result)
 
 # we don't test persistence, so you have to look at the pattern to see the result
+    print("Testing: setControls")
     time.sleep(2)                             # display pattern w/original control setting
     pb.setControl(testControlName,1,False)    # set control value to max
     for i in range(5):                        # display this way for a while

@@ -41,13 +41,32 @@ Pixelblaze object.  To control multiple Pixelblazes, create multiple objects.
 Close websocket connection on Pixelblaze object.  The connection can be 
 reopene by calling open() on the same or a different IP address.
 
+#### controlExists(ctl_name,pattern = None)
+Returns True if the specified control exists, False otherwise.
+The pattern argument takes the name or ID of the pattern to check.
+If pattern argument is not specified, checks the currently running pattern.
+Note that getActivePattern() can return None on a freshly started
+Pixelblaze until the pattern has been explicitly set.  This function
+also will return False if the active pattern is not available.
+
 #### getActivePattern()
 Returns the ID and name of the pattern currently running on
 the Pixelblaze if available.  Otherwise returns an empty dictionary
 object
 
+#### getColorControlName(pattern = None)
+Returns the name of the specified pattern's rgbPicker or hsvPicker control
+if it exists, None otherwise.  If the pattern argument is not specified,
+checks in the currently running pattern
+
 #### getControls(pid)
-Returns a JSON object containing the state of all the active pattern's UI controls
+Returns a JSON object containing the state of all the specified
+pattern's UI controls. If the pattern argument is not specified,
+returns the controls for the currently active pattern if available.
+Returns empty object if the pattern has no UI controls, None if
+the pattern id is not valid or is not available.
+(Note that getActivePattern() can return None on a freshly started
+Pixelblaze until the pattern has been explicitly set.)
 
 #### getHardwareConfig()
 Returns a JSON object containing all the available hardware configuration data
@@ -77,9 +96,21 @@ if you already know a pattern's ID. It does not validate the input id, or determ
 #### setBrightness(n)
 Set the Pixelblaze's global brightness.  Valid range is 0-1
 
+#### setColorControl(ctl_name, color, saveFlash = False)
+Sets the 3-element color of the specified HSV or RGB color picker.
+The color argument should contain an RGB or HSV color with all values
+in the range 0-1. To reduce wear on Pixelblaze's flash memory, the saveFlash parameter
+is ignored by default.  See documentation for _enable_flash_save() for
+more information.
+        
+Based on testing w/Pixelblaze, no run-time length or range validation is performed
+on color. Pixelblaze ignores extra elements, sets unspecified elements to zero,
+takes only the fractional part of elements outside the range 0-1, and
+does something like (1-(n % 1)) for any negative elements.
+
 #### setControl(ctl_name, value, saveFlash = False)
 Sets the value of a single UI controls in the active pattern.
-to values contained inct in argument json_ctl. To reduce wear on Pixelblaze's flash memory, the saveFlash parameter is ignored
+to values contained in the argument json_ctl. To reduce wear on Pixelblaze's flash memory, the saveFlash parameter is ignored
 by default.  See documentation for _enable_flash_save() for
 more information.
 
@@ -118,6 +149,9 @@ variable is actually exported by the current active pattern.
 #### setVars(json_vars)
 Sets pattern variables contained in the json_vars (JSON object) argument.
 Does not check to see if the variables are exported by the current active pattern.
+
+#### variableExists(var_name)
+Returns True if the specified variable exists in the active pattern, False otherwise.
 
 #### waitForEmptyQueue(timeout_ms=1000):
 Wait until the Pixelblaze's websocket message queue is empty, or until
