@@ -3,7 +3,19 @@ A Python library that presents a simple, synchronous interface for communicating
 controlling one or more Pixelblaze LED controllers. Requires Python 3 and the websocket-client
 module.
 
-## Version 0.0.1
+## Current Version: v0.0.2
+Added methods for dealing with color picker controls:
+- controlExists(), getColorControlName(), setColorControl()
+New convenience methods:
+- variableExists() 
+Various improvements:
+- Enhanced getControls(pattern) method so that omitting the pattern argument fetches the controls for
+the currently running pattern, if available.
+
+New methods are documented in the API Documentation section below.
+
+## Previously...
+#### Version 0.0.1
 Initial release - here be dragons (hopefully not, but bugs are within the realm of possibility)
 
 ## Requirements
